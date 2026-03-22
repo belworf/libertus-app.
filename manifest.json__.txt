@@ -1,0 +1,16 @@
+{
+  "name": "Libertu's MG",
+  "short_name": "Libertus",
+  "description": "App oficial do Libertu's MG - São José SC",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#C5A059",
+  "icons": [
+    {
+      "src": "./assets/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
