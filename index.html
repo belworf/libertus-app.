@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Libertu's MG" />
+
+  <title>Libertu's MG • Oficial</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./assets/logo.png" type="image/png" />
+  <link rel="apple-touch-icon" href="./assets/logo.png">
+
+  <style>
+    :root {
+      --bg: #000000;
+      --panel: #0e0e0e;
+      --gold: #C5A059; /* Tom de dourado da sua logo */
+      --gold-glow: rgba(197, 160, 89, 0.2);
+      --text: #f3f3f3;
+      --muted: #b8b8b8;
+      --danger: #8f1414;
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Tela de Carregamento (Splash) */
+    .splash {
+      position: fixed; inset: 0; z-index: 999; background: #000;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 0.5s ease, visibility 0.5s;
+    }
+    .splash.hide { opacity: 0; visibility: hidden; }
+    .splash-logo {
+      width: 150px; height: 150px; border-radius: 50%;
+      border: 2px solid var(--gold);
+      box-shadow: 0 0 30px var(--gold-glow);
+      animation: pulse 2s infinite ease-in-out;
+      margin-bottom: 20px;
+    }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+    /* Layout Geral */
+    .app { max-width: 800px; margin: 0 auto; padding: 20px 16px 120px; }
+
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand img { width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--gold); }
+    .brand h1 { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Hero Card */
+    .hero {
+      background: linear-gradient(145deg, #111, #050505);
+      border: 1px solid rgba(197, 160, 89, 0.2);
+      border-radius: var(--radius);
+      padding: 20px; text-align: center; margin-bottom: 20px;
+    }
+    .hero img { width: 120px; margin: 0 auto 15px; display: block; }
+    .hero h2 { font-size: 1.4rem; margin-bottom: 8px; }
+    .hero p { color: var(--muted); font-size: 0.9rem; }
+
+    /* Seções */
+    .section { display: none; animation: fadeIn 0.3s ease; }
+    .section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card {
+      background: var(--panel);
+      border-radius: var(--radius);
+      padding: 18px; margin-bottom: 16px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .card-title { color: var(--gold); font-size: 0.85rem; font-weight: bold; text-transform: uppercase; margin-bottom: 12px; display: block; }
+
+    /* Botão de Instalação */
+    #installBtn {
+      display: none; background: var(--gold); color: #000; border: none;
+      padding: 8px 15px; border-radius: 50px; font-weight: bold; cursor: pointer;
+    }
+
+    /* Navegação Inferior */
+    .nav {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      width: 90%; max-width: 500px; background: rgba(15,15,15,0.95);
+      backdrop-filter: blur(10px); border-radius: 25px;
+      display: flex; justify-content: space-around; padding: 12px;
+      border: 1px solid rgba(197, 160, 89, 0.3); z-index: 100;
+    }
+    .nav-btn {
+      background: none; border: none; color: var(--muted);
+      display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.7rem; cursor: pointer;
+    }
+    .nav-btn.active { color: var(--gold); }
+
+    /* SOS */
+    .sos-btn {
+      position: fixed; right: 20px; bottom: 100px;
+      width: 60px; height: 60px; border-radius: 50%;
+      background: var(--danger); color: white; border: 2px solid #fff;
+      font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 99;
+    }
+
+    /* Modal de Admin */
+    .modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      z-index: 1000; display: none; padding: 20px; overflow-y: auto;
+    }
+    .modal.show { display: block; }
+    .modal-content { background: #111; padding: 20px; border-radius: var(--radius); border: 1px solid var(--gold); }
+    input, textarea { width: 100%; padding: 12px; margin: 8px 0; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; }
+    .btn-save { background: var(--gold); color: #000; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; margin-top: 10px; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { color: var(--gold); text-align: left; font-size: 0.8rem; padding-bottom: 8px; }
+    td { padding: 10px 0; border-top: 1px solid #222; font-size: 0.9rem; }
+    .status-ok { color: var(--gold); }
+    .status-no { color: #555; }
+  </style>
+</head>
+<body>
+
+  <!-- Tela de Abertura -->
+  <div class="splash" id="splash">
+    <img src="./assets/logo.png" class="splash-logo" alt="Libertu's MG">
+    <h2 style="color:var(--gold); letter-spacing: 2px;">LIBERTU'S MG</h2>
+  </div>
+
+  <div class="app">
+    <header>
+      <div class="brand">
+        <img src="./assets/logo.png" alt="Logo">
+        <h1>Libertu's MG</h1>
+      </div>
+      <button id="installBtn">INSTALAR</button>
+      <button id="adminBtn" style="background:none; border:none; color:var(--gold); font-size:1.5rem;">⚙</button>
+    </header>
+
+    <!-- Início -->
+    <section id="home" class="section active">
+      <div class="hero">
+        <img src="./assets/logo.png" alt="Logo Grande">
+        <h2 id="destName">Carregando...</h2>
+        <p id="destInfo">📅 --/-- • 🕗 --:--</p>
+      </div>
+
+      <div class="card">
+        <span class="card-title">Ações</span>
+        <button onclick="window.open(APP.groupLocationUrl)" style="width:100%; padding:15px; border-radius:12px; background:#1a1a1a; color:var(--gold); border:1px solid var(--gold); font-weight:bold; margin-bottom:10px;">📍 LOCALIZAR GRUPO</button>
+      </div>
+    </section>
+
+    <!-- Financeiro -->
+    <section id="finance" class="section">
+      <div class="card">
+        <span class="card-title">Situação da Irmandade</span>
+        <table>
+          <thead><tr><th>IRMÃO</th><th>STATUS</th></tr></thead>
+          <tbody id="memberTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Agenda -->
+    <section id="agenda" class="section">
+      <div class="card">
+        <span class="card-title">Próximos Encontros</span>
+        <div id="eventList"></div>
+      </div>
+    </section>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="switchSection('home')">🏠<span>Home</span></button>
+    <button class="nav-btn" onclick="switchSection('finance')">💰<span>Financeiro</span></button>
+    <button class="nav-btn" onclick="switchSection('agenda')">🛣<span>Estrada</span></button>
+  </nav>
+
+  <button class="sos-btn" id="sosBtn">SOS</button>
+
+  <!-- Modal Admin -->
+  <div class="modal" id="adminModal">
+    <div class="modal-content">
+      <h2 style="color:var(--gold); margin-bottom:15px;">Gestão Libertu's</h2>
+      <label>Destino Principal</label>
+      <input type="text" id="inDestName" placeholder="Ex: Serra do Rio do Rastro">
+      <input type="text" id="inDestInfo" placeholder="Ex: 27/04 • 07:30">
+      
+      <label>Link Localização (Google Maps)</label>
+      <input type="text" id="inLoc" placeholder="Link do Maps">
+
+      <label>WhatsApp SOS (Com DDD)</label>
+      <input type="text" id="inSos" placeholder="48999999999">
+
+      <label>Membros (Nome|1 para Pago, Nome|0 para Pendente)</label>
+      <textarea id="inMembers" rows="5" placeholder="João|1&#10;Maria|0"></textarea>
+
+      <button class="btn-save" onclick="saveAdmin()">SALVAR DADOS</button>
+      <button onclick="closeAdmin()" style="width:100%; background:none; border:none; color:white; margin-top:15px;">Cancelar</button>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "libertus_data_v2";
+    const $ = (s) => document.querySelector(s);
+
+    let APP = {
+      nextDest: "Próximo Destino",
+      nextInfo: "Defina no painel de gestão",
+      groupLocationUrl: "#",
+      sosNumber: "",
+      members: []
+    };
+
+    function loadData() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) APP = JSON.parse(saved);
+      renderAll();
+    }
+
+    function renderAll() {
+      $("#destName").textContent = APP.nextDest;
+      $("#destInfo").textContent = APP.nextInfo;
+      
+      const mTable = $("#memberTable");
+      mTable.innerHTML = APP.members.map(m => `
+        <tr>
+          <td>${m.name}</td>
+          <td class="${m.paid ? 'status-ok' : 'status-no'}">${m.paid ? '✓ Em dia' : '⚠ Pendente'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function switchSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      $('#' + id).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+
+    // Admin Functions
+    $("#adminBtn").onclick = () => {
+      $("#inDestName").value = APP.nextDest;
+      $("#inDestInfo").value = APP.nextInfo;
+      $("#inLoc").value = APP.groupLocationUrl;
+      $("#inSos").value = APP.sosNumber;
+      $("#inMembers").value = APP.members.map(m => `${m.name}|${m.paid?1:0}`).join('\n');
+      $("#adminModal").classList.add('show');
+    };
+
+    function saveAdmin() {
+      APP.nextDest = $("#inDestName").value;
+      APP.nextInfo = $("#inDestInfo").value;
+      APP.groupLocationUrl = $("#inLoc").value;
+      APP.sosNumber = $("#inSos").value;
+      
+      const lines = $("#inMembers").value.split('\n');
+      APP.members = lines.filter(l => l.includes('|')).map(l => {
+        const [name, status] = l.split('|');
+        return { name: name.trim(), paid: status.trim() === '1' };
+      });
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(APP));
+      renderAll();
+      closeAdmin();
+    }
+
+    function closeAdmin() { $("#adminModal").classList.remove('show'); }
+
+    // SOS Function
+    $("#sosBtn").onclick = () => {
+      if(!APP.sosNumber) return alert("Configure o número de SOS no painel.");
+      const msg = encodeURIComponent("🚨 SOS - LIBERTU'S MG\nPreciso de apoio na estrada!");
+      window.open(`https://wa.me/${APP.sosNumber}?text=${msg}`);
+    };
+
+    // PWA Install
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      $("#installBtn").style.display = "block";
+    });
+
+    $("#installBtn").onclick = async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt = null;
+        $("#installBtn").style.display = "none";
+      }
+    };
+
+    // Inicialização segura
+    window.onload = () => {
+      loadData();
+      // Força sumir o splash após 2 segundos (segurança)
+      setTimeout(() => {
+        $("#splash").classList.add('hide');
+      }, 2000);
+    };
+  </script>
+
+  <script>
+    // Registro do Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>
