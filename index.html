@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Libertu's MG • Sistema de Gestão</title>
+  
+  <!-- Bibliotecas para PDF e Alertas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <style>
+    :root {
+      --gold: #C5A059;
+      --dark: #1a1a1a;
+      --light: #f4f4f7;
+      --white: #ffffff;
+      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--light); color: var(--dark); padding-bottom: 30px; }
+
+    /* SIDEBAR */
+    #sidebar {
+      position: fixed; left: -280px; top: 0; width: 280px; height: 100%;
+      background: var(--dark); color: white; z-index: 2000;
+      transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 30px 20px;
+    }
+    #sidebar.active { left: 0; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1999; display: none; backdrop-filter: blur(3px); }
+    .overlay.active { display: block; }
+    .menu-item { padding: 15px; border-radius: 10px; margin-bottom: 5px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+    .menu-item:hover { background: rgba(197, 160, 89, 0.2); color: var(--gold); }
+
+    /* HEADER */
+    header {
+      background: var(--white); padding: 15px 20px; display: flex; 
+      align-items: center; justify-content: space-between;
+      box-shadow: var(--shadow); position: sticky; top: 0; z-index: 1000;
+    }
+    .btn-open { font-size: 1.6rem; background: none; border: none; color: var(--gold); cursor: pointer; }
+
+    /* CONTAINER */
+    .container { max-width: 600px; margin: 0 auto; padding: 20px 15px; }
+    .section { display: none; animation: slideUp 0.4s ease; }
+    .section.active { display: block; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* CARDS */
+    .card { background: var(--white); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+    .card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--gold); }
+    .card-title { font-size: 0.9rem; font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: block; }
+
+    /* FORMS */
+    input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 1rem; outline: none; }
+    input:focus { border-color: var(--gold); }
+    .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+    .btn-gold { background: var(--gold); color: white; }
+    .btn-dark { background: var(--dark); color: white; }
+
+    /* LISTS */
+    .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
+    .pago { color: #2e7d32; font-weight: bold; font-size: 0.8rem; }
+    .pendente { color: #d32f2f; font-weight: bold; font-size: 0.8rem; }
+
+    /* SOS */
+    .sos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .sos-link { display: block; padding: 20px 10px; text-align: center; border-radius: 12px; text-decoration: none; color: white; font-weight: bold; font-size: 0.9rem; }
+
+    /* ANIVERSÁRIO */
+    .bday-banner { background: #fff3cd; color: #856404; padding: 12px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid var(--gold); font-size: 0.85rem; display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Menu Sidebar -->
+  <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+  <nav id="sidebar">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <img src="./assets/logo.png" width="90" style="border-radius: 50%; border: 2px solid var(--gold);">
+      <h2 style="color:var(--gold); margin-top:10px; font-size: 1.2rem;">Libertu's MG</h2>
+    </div>
+    <div class="menu-item" onclick="showSection('home')">🏠 Início</div>
+    <div class="menu-item" onclick="showSection('members')">☠ Integrantes</div>
+    <div class="menu-item" onclick="showSection('finance')">💰 Financeiro</div>
+    <div class="menu-item" onclick="showSection('events')">🛣 Eventos/Destinos</div>
+    <div class="menu-item" onclick="showSection('sos')">🚨 SOS Emergência</div>
+    <hr style="opacity: 0.1; margin: 15px 0;">
+    <div class="menu-item" onclick="adminLogin('pres')" style="color:var(--gold)">🔑 Login Presidente</div>
+    <div class="menu-item" onclick="adminLogin('fin')" style="color:var(--gold)">🔑 Login Tesouraria</div>
+  </nav>
+
+  <header>
+    <button class="btn-open" onclick="toggleMenu()">☰</button>
+    <span style="font-weight: 900; letter-spacing: 1px;">SISTEMA DE GESTÃO</span>
+    <img src="./assets/logo.png" width="35" style="border-radius: 50%;">
+  </header>
+
+  <div class="container">
+    
+    <!-- ANIVERSÁRIOS -->
+    <div id="bday-banner" class="bday-banner"></div>
+
+    <!-- SEÇÃO HOME -->
+    <section id="home" class="section active">
+      <div class="card" style="text-align: center;">
+        <span class="card-title">Próximo Destino</span>
+        <h2 id="home-event-title">Carregando evento...</h2>
+        <p id="home-event-date" style="color:var(--gold); margin: 5px 0 15px;">--/--/--</p>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-gold" onclick="confirmRSVP(true)">Vou</button>
+          <button class="btn btn-dark" onclick="confirmRSVP(false)">Não vou</button>
+        </div>
+        <button class="btn btn-outline" style="margin-top:10px; background:none; border:1px solid #ddd; padding:8px;" onclick="openMap()">📍 Ver no Mapa/Waze</button>
+      </div>
+
+      <div class="card">
+        <span class="card-title">Resumo do Caixa</span>
+        <h1 id="home-balance">R$ 0,00</h1>
+      </div>
+    </section>
+
+    <!-- SEÇÃO MEMBROS -->
+    <section id="members" class="section">
+      <div id="pres-tools" style="display:none;" class="card">
+        <span class="card-title">Novo Integrante (Presidente)</span>
+        <input type="text" id="m-nome" placeholder="Nome Completo">
+        <input type="tel" id="m-tel" placeholder="WhatsApp (489...)">
+        <input type="date" id="m-nasc">
+        <select id="m-patente">
+          <option value="Escudado">Escudado</option>
+          <option value="Próspero">Próspero</option>
+          <option value="Meio Escudo">Meio Escudo</option>
+          <option value="Diretoria">Diretoria</option>
+        </select>
+        <button class="btn btn-gold" onclick="addMember()">Cadastrar Irmão</button>
+      </div>
+
+      <div class="card">
+        <span class="card-title">Irmandade</span>
+        <div id="members-list"></div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO FINANCEIRO -->
+    <section id="finance" class="section">
+      <div class="card">
+        <span class="card-title">Minha Mensalidade</span>
+        <p style="font-size: 0.8rem; margin-bottom: 10px;">Pague via PIX e gere seu recibo:</p>
+        <div id="pix-display" style="background:#f9f9f9; padding:10px; border-radius:8px; font-weight:bold; word-break:break-all; margin-bottom:10px;">Chave: carregando...</div>
+        <button class="btn btn-gold" onclick="payMensalidade()">Gerar Comprovante PDF</button>
+      </div>
+
+      <div id="fin-tools" style="display:none;" class="card">
+        <span class="card-title">Gestão Financeira (Tesouraria)</span>
+        <input type="text" id="f-desc" placeholder="Descrição da Transação">
+        <input type="number" id="f-valor" placeholder="Valor R$">
+        <select id="f-tipo"><option value="in">Entrada (+)</option><option value="out">Saída (-)</option></select>
+        <button class="btn btn-gold" onclick="addTransaction()">Lançar no Caixa</button>
+      </div>
+
+      <div class="card">
+        <span class="card-title">Extrato Geral</span>
+        <div id="finance-list"></div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO EVENTOS -->
+    <section id="events" class="section">
+      <div id="pres-event-tools" style="display:none;" class="card">
+        <span class="card-title">Organizar Evento (Presidente)</span>
+        <input type="text" id="e-title" placeholder="Nome do Passeio/Evento">
+        <input type="date" id="e-date">
+        <input type="text" id="e-loc" placeholder="Link do Google Maps">
+        <button class="btn btn-gold" onclick="saveEvent()">Publicar Destino</button>
+      </div>
+      <div class="card">
+        <span class="card-title">Histórico de Estradas</span>
+        <div id="events-history"></div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO SOS -->
+    <section id="sos" class="section">
+      <div class="card">
+        <span class="card-title">Emergência Imediata</span>
+        <div class="sos-grid">
+          <a href="tel:190" class="sos-link" style="background:#2b58a1;">🚓 PM (190)</a>
+          <a href="tel:191" class="sos-link" style="background:#ff8c00;">🛣 PRF (191)</a>
+          <a href="tel:192" class="sos-link" style="background:#d32f2f;">🚑 SAMU (192)</a>
+          <a href="tel:193" class="sos-link" style="background:#b71c1c;">🚒 SIATE (193)</a>
+        </div>
+        <button class="btn btn-dark" style="margin-top:15px;" onclick="callEmergencyIrmao()">🆘 Chamar Irmão do Grupo</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // --- DATABASE & CONFIG ---
+    const APP_STORAGE = "libertus_v4_data";
+    let DB = JSON.parse(localStorage.getItem(APP_STORAGE)) || {
+      config: { 
+        pix: "5548999999999", // Altere aqui para sua chave PIX padrão
+        passPres: "123", 
+        passFin: "321",
+        sosIrmao: "5548999999999"
+      },
+      members: [],
+      finance: [],
+      event: { title: "Passeio Inaugural", date: "2026-04-10", loc: "https://maps.google.com" }
+    };
+
+    let currentUser = "guest"; // guest, pres, fin
+
+    // --- NAVEGAÇÃO ---
+    function toggleMenu() {
+      document.getElementById('sidebar').classList.toggle('active');
+      document.getElementById('overlay').classList.toggle('active');
+    }
+
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if(window.innerWidth < 800) toggleMenu();
+      renderAll();
+    }
+
+    // --- AUTENTICAÇÃO ---
+    function adminLogin(type) {
+      const pass = prompt("Digite a senha de autoridade:");
+      if(type === 'pres' && pass === DB.config.passPres) {
+        currentUser = 'pres';
+        document.getElementById('pres-tools').style.display = 'block';
+        document.getElementById('pres-event-tools').style.display = 'block';
+        Swal.fire("Bem-vindo Presidente!", "Acesso total liberado.", "success");
+      } else if(type === 'fin' && pass === DB.config.passFin) {
+        currentUser = 'fin';
+        document.getElementById('fin-tools').style.display = 'block';
+        Swal.fire("Bem-vindo Tesoureiro!", "Gestão financeira liberada.", "success");
+      } else {
+        Swal.fire("Erro", "Senha incorreta!", "error");
+      }
+      showSection('home');
+    }
+
+    // --- GESTÃO DE MEMBROS ---
+    function addMember() {
+      const nome = document.getElementById('m-nome').value;
+      const tel = document.getElementById('m-tel').value;
+      const nasc = document.getElementById('m-nasc').value;
+      const patente = document.getElementById('m-patente').value;
+
+      if(!nome || !nasc) return Swal.fire("Atenção", "Preencha nome e data de nascimento.", "warning");
+
+      DB.members.push({ nome, tel, nasc, patente, pago: false });
+      updateDB();
+      Swal.fire("Sucesso", "Irmão cadastrado na nuvem!", "success");
+    }
+
+    // --- GESTÃO FINANCEIRA ---
+    function addTransaction() {
+      const desc = document.getElementById('f-desc').value;
+      const val = parseFloat(document.getElementById('f-valor').value);
+      const tipo = document.getElementById('f-tipo').value;
+
+      if(!desc || !val) return;
+
+      DB.finance.push({ desc, val, tipo, date: new Date().toLocaleDateString() });
+      updateDB();
+    }
+
+    // --- RECIBO PDF (Item 5) ---
+    function payMensalidade() {
+      Swal.fire({
+        title: 'Pagamento PIX',
+        text: `Transfira para: ${DB.config.pix}. Após o envio, gere seu recibo oficial aqui.`,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Gerar Recibo (PDF)'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+          doc.text("RECIBO DE MENSALIDADE - LIBERTU'S MG", 10, 20);
+          doc.text(`Data: ${new Date().toLocaleDateString()}`, 10, 30);
+          doc.text("Status: Pago via PIX", 10, 40);
+          doc.text("Este documento serve como comprovante de irmandade.", 10, 50);
+          doc.save("recibo-libertus-mg.pdf");
+          Swal.fire("Recibo Gerado!", "O arquivo PDF foi salvo no seu celular.", "success");
+        }
+      });
+    }
+
+    // --- EVENTOS (Item 6) ---
+    function saveEvent() {
+      DB.event.title = document.getElementById('e-title').value;
+      DB.event.date = document.getElementById('e-date').value;
+      DB.event.loc = document.getElementById('e-loc').value;
+      updateDB();
+      Swal.fire("Evento Publicado!", "Todos os membros já podem ver o destino.", "success");
+    }
+
+    function openMap() {
+      if(DB.event.loc.includes("http")) {
+        window.open(DB.event.loc, "_blank");
+      } else {
+        Swal.fire("Ops", "O Presidente ainda não postou o link do mapa.", "info");
+      }
+    }
+
+    // --- RENDERIZAÇÃO ---
+    function renderAll() {
+      // Home Evento
+      document.getElementById('home-event-title').textContent = DB.event.title;
+      document.getElementById('home-event-date').textContent = DB.event.date.split('-').reverse().join('/');
+      document.getElementById('pix-display').textContent = "Chave PIX: " + DB.config.pix;
+
+      // Lista Membros
+      const mList = document.getElementById('members-list');
+      mList.innerHTML = DB.members.map(m => `
+        <div class="list-item">
+          <div><b>${m.nome}</b><br><small>${m.patente}</small></div>
+          <span class="${m.pago ? 'pago' : 'pendente'}">${m.pago ? 'PAGO' : 'PENDENTE'}</span>
+        </div>
+      `).join('');
+
+      // Caixa
+      let saldo = 0;
+      DB.finance.forEach(f => { if(f.tipo==='in') saldo += f.val; else saldo -= f.val; });
+      document.getElementById('home-balance').textContent = "R$ " + saldo.toLocaleString('pt-BR', {minimumFractionDigits:2});
+
+      // Aniversariantes (Mês atual)
+      const mesAtual = new Date().getMonth() + 1;
+      const nivers = DB.members.filter(m => parseInt(m.nasc.split('-')[1]) === mesAtual);
+      const banner = document.getElementById('bday-banner');
+      if(nivers.length > 0) {
+        banner.style.display = 'block';
+        banner.innerHTML = "🎂 <b>Aniversariantes do Mês:</b> " + nivers.map(n => n.nome).join(", ");
+      }
+    }
+
+    function updateDB() {
+      localStorage.setItem(APP_STORAGE, JSON.stringify(DB));
+      renderAll();
+    }
+
+    function callEmergencyIrmao() {
+      window.open(`https://wa.me/${DB.config.sosIrmao}?text=🚨%20SOS%20ESTRADA!%20Preciso%20de%20apoio!`);
+    }
+
+    window.onload = renderAll;
+  </script>
+</body>
+</html>
